@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= title %></title>
+    
+    <!-- TailwindCSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- SortableJS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    
+    <!-- Iconos Lucide -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <style>
+        /* Animaciones personalizadas */
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .slide-down {
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Loading spinner */
+        .spinner {
+            border: 2px solid #f3f4f6;
+            border-top: 2px solid #3b82f6;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Drag handle cursor */
+        .drag-handle {
+            cursor: grab;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        /* Sortable ghost styles */
+        .sortable-ghost {
+            opacity: 0.5;
+            background: #e5e7eb;
+        }
+        
+        /* Status indicators */
+        .status-success { @apply bg-green-100 text-green-800 border-green-200; }
+        .status-error { @apply bg-red-100 text-red-800 border-red-200; }
+        .status-pending { @apply bg-yellow-100 text-yellow-800 border-yellow-200; }
+        .status-disabled { @apply bg-gray-100 text-gray-600 border-gray-200; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-gray-900">
+                            <i data-lucide="server" class="inline w-6 h-6 mr-2"></i>
+                            XML API Aggregator
+                        </h1>
+                    </div>
+                    <div class="ml-4">
+                        <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                            v1.0.0
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- Status indicator -->
+                    <div class="flex items-center">
+                        <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                        <span class="text-sm text-gray-600">Online</span>
+                    </div>
+                    
+                    <!-- Actions -->
+                    <button onclick="refreshApis()" class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                    </button>
+                    
+                    <button onclick="showSettings()" class="p-2 text-gray-400 hover:text-gray-600 transition-colors">
+                        <i data-lucide="settings" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i data-lucide="database" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Total APIs</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= apis.length %></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i data-lucide="check-circle" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Activas</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= apis.filter(api => api.enabled).length %></p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-yellow-100 rounded-lg">
+                        <i data-lucide="clock" class="w-6 h-6 text-yellow-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Cache Time</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= config.settings.cacheTime %>s</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i data-lucide="timer" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-600">Timeout</p>
+                        <p class="text-2xl font-bold text-gray-900"><%= config.settings.timeout / 1000 %>s</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Actions Bar -->
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-lg font-medium text-gray-900">APIs Configuradas</h2>
+            <div class="flex space-x-3">
+                <button onclick="testAllApis()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                    <i data-lucide="zap" class="w-4 h-4 mr-2"></i>
+                    Probar Todas
+                </button>
+                <button onclick="showAddApiModal()" class="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    Agregar API
+                </button>
+            </div>
+        </div>
+
+        <!-- APIs List -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-medium text-gray-900">Lista de APIs</h3>
+                    <div class="text-sm text-gray-500">
+                        Arrastra para reordenar
+                    </div>
+                </div>
+            </div>
+            
+            <div id="apis-container" class="divide-y divide-gray-200">
+                <% if (apis.length === 0) { %>
+                    <div class="px-6 py-12 text-center">
+                        <i data-lucide="inbox" class="mx-auto h-12 w-12 text-gray-400"></i>
+                        <h3 class="mt-2 text-sm font-medium text-gray-900">No hay APIs configuradas</h3>
+                        <p class="mt-1 text-sm text-gray-500">Comienza agregando tu primera API externa.</p>
+                        <div class="mt-6">
+                            <button onclick="showAddApiModal()" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                                <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                                Agregar Primera API
+                            </button>
+                        </div>
+                    </div>
+                <% } else { %>
+                    <% apis.forEach((api, index) => { %>
+                        <div class="api-item px-6 py-4" data-api-id="<%= api.id %>">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <!-- Drag Handle -->
+                                    <div class="drag-handle p-1 text-gray-400 hover:text-gray-600">
+                                        <i data-lucide="grip-vertical" class="w-5 h-5"></i>
+                                    </div>
+                                    
+                                    <!-- API Info -->
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-3">
+                                            <h4 class="text-sm font-medium text-gray-900"><%= api.name %></h4>
+                                            
+                                            <!-- Status Badge -->
+                                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border status-<%= api.enabled ? (api.lastStatus || 'pending') : 'disabled' %>">
+                                                <% if (!api.enabled) { %>
+                                                    <i data-lucide="pause-circle" class="w-3 h-3 mr-1"></i>
+                                                    Deshabilitada
+                                                <% } else if (api.lastStatus === 'success') { %>
+                                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                                    Activa
+                                                <% } else if (api.lastStatus === 'error') { %>
+                                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i>
+                                                    Error
+                                                <% } else { %>
+                                                    <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
+                                                    Pendiente
+                                                <% } %>
+                                            </span>
+                                            
+                                            <!-- Interval Badge -->
+                                            <span class="inline-flex items-center px-2 py-1 rounded text-xs text-gray-600 bg-gray-100">
+                                                <i data-lucide="timer" class="w-3 h-3 mr-1"></i>
+                                                <%= api.interval %>s
+                                            </span>
+                                        </div>
+                                        
+                                        <div class="mt-1 flex items-center space-x-4 text-sm text-gray-500">
+                                            <span class="flex items-center">
+                                                <i data-lucide="link" class="w-4 h-4 mr-1"></i>
+                                                <%= api.url || 'URL no configurada' %>
+                                            </span>
+                                            
+                                            <% if (api.lastFetch) { %>
+                                                <span class="flex items-center">
+                                                    <i data-lucide="clock" class="w-4 h-4 mr-1"></i>
+                                                    Último: <%= new Date(api.lastFetch).toLocaleString('es-ES') %>
+                                                </span>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Actions -->
+                                <div class="flex items-center space-x-2">
+                                    <!-- Test Button -->
+                                    <button onclick="testApi('<%= api.id %>')" class="p-2 text-gray-400 hover:text-blue-600 transition-colors" title="Probar conectividad">
+                                        <i data-lucide="zap" class="w-4 h-4"></i>
+                                    </button>
+                                    
+                                    <!-- Toggle Enable/Disable -->
+                                    <button onclick="toggleApi('<%= api.id %>', '<%= !api.enabled %>')" class="p-2 text-gray-400 hover:text-yellow-600 transition-colors" title="<%= api.enabled ? 'Deshabilitar' : 'Habilitar' %>">
+                                        <i data-lucide="<%= api.enabled ? 'pause' : 'play' %>" class="w-4 h-4"></i>
+                                    </button>
+                                    
+                                    <!-- Edit Button -->
+                                    <button onclick="editApi('<%= api.id %>')" class="p-2 text-gray-400 hover:text-green-600 transition-colors" title="Editar">
+                                        <i data-lucide="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    
+                                    <!-- Delete Button -->
+                                    <button onclick="deleteApi('<%= api.id %>', '<%= api.name %>')" class="p-2 text-gray-400 hover:text-red-600 transition-colors" title="Eliminar">
+                                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    <% }); %>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mt-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-blue-100 rounded-lg">
+                        <i data-lucide="eye" class="w-6 h-6 text-blue-600"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-sm font-medium text-gray-900">Vista Previa</h3>
+                        <p class="text-sm text-gray-500">Ver XML agregado</p>
+                    </div>
+                    <button onclick="previewAggregated()" class="text-blue-600 hover:text-blue-800">
+                        <i data-lucide="external-link" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-green-100 rounded-lg">
+                        <i data-lucide="download" class="w-6 h-6 text-green-600"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-sm font-medium text-gray-900">Exportar Config</h3>
+                        <p class="text-sm text-gray-500">Descargar configuración</p>
+                    </div>
+                    <button onclick="exportConfig()" class="text-green-600 hover:text-green-800">
+                        <i data-lucide="external-link" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg shadow p-6">
+                <div class="flex items-center">
+                    <div class="p-2 bg-purple-100 rounded-lg">
+                        <i data-lucide="upload" class="w-6 h-6 text-purple-600"></i>
+                    </div>
+                    <div class="ml-4 flex-1">
+                        <h3 class="text-sm font-medium text-gray-900">Importar Config</h3>
+                        <p class="text-sm text-gray-500">Cargar configuración</p>
+                    </div>
+                    <label for="import-file" class="text-purple-600 hover:text-purple-800 cursor-pointer">
+                        <i data-lucide="external-link" class="w-5 h-5"></i>
+                        <input type="file" id="import-file" class="hidden" accept=".json" onchange="importConfig(this)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    <!-- Modals -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-40"></div>
+    
+    <!-- Add/Edit API Modal -->
+    <div id="api-modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <form id="api-form" onsubmit="saveApi(event)">
+                    <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                        <div class="sm:flex sm:items-start">
+                            <div class="w-full">
+                                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4" id="modal-title">
+                                    Agregar Nueva API
+                                </h3>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">Nombre</label>
+                                        <input type="text" id="api-name" name="name" required 
+                                               class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                               placeholder="Mi API Externa">
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">URL</label>
+                                        <div class="mt-1 flex rounded-md shadow-sm">
+                                            <input type="url" id="api-url" name="url" required 
+                                                   class="flex-1 block w-full border-gray-300 rounded-l-md focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                                                   placeholder="https://api.ejemplo.com/data.xml">
+                                            <button type="button" onclick="testCurrentUrl()" 
+                                                    class="inline-flex items-center px-3 py-2 border border-l-0 border-gray-300 rounded-r-md bg-gray-50 text-gray-500 hover:bg-gray-100">
+                                                <i data-lucide="zap" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                        <div id="url-test-result" class="mt-2 text-sm"></div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Intervalo (segundos)</label>
+                                            <input type="number" id="api-interval" name="interval" min="30" value="300" required
+                                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">Timeout (ms)</label>
+                                            <input type="number" id="api-timeout" name="timeout" min="1000" value="5000" required
+                                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="api-enabled" name="enabled" checked
+                                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                            <span class="ml-2 text-sm text-gray-700">API habilitada</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                        <button type="submit" 
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                            Guardar
+                        </button>
+                        <button type="button" onclick="closeApiModal()" 
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                            Cancelar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden inputs for form -->
+    <input type="hidden" id="editing-api-id">
+
+    <!-- JavaScript -->
+    <script src="/js/admin.js"></script>
+    <script>
+        // Inicializar iconos de Lucide
+        lucide.createIcons();
+        
+        // Inicializar aplicación cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🎨 Panel de administración cargado');
+            initializeApp();
+        });
+    </script>
+</body>
+</html>

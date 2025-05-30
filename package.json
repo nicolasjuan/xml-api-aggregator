@@ -1,0 +1,36 @@
+{
+  "name": "xml-api-aggregator",
+  "version": "1.0.0",
+  "description": "Agregador de APIs XML para red local",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "xml",
+    "api",
+    "aggregator",
+    "express",
+    "local-server"
+  ],
+  "author": "Nicolás Noé",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ejs": "^3.1.9",
+    "axios": "^1.6.0",
+    "node-cron": "^3.0.3",
+    "fast-xml-parser": "^4.3.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
