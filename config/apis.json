@@ -1,0 +1,13 @@
+{
+  "apis": [],
+  "settings": {
+    "cacheTime": 300,
+    "timeout": 5000,
+    "retries": 3,
+    "userAgent": "XML-Aggregator/1.0",
+    "enableCors": true,
+    "port": 8080,
+    "logLevel": "info"
+  },
+  "lastModified": "2025-05-30T13:18:03.127Z"
+}

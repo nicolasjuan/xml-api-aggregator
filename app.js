@@ -7,7 +7,7 @@ const morgan = require('morgan');
 const fs = require('fs').promises;
 
 // Importar módulos propios
-const ConfigManager = require('./modules/configManager');
+const ConfigManager = require('./modules/config-manager');
 
 // Inicializar Express
 const app = express();
