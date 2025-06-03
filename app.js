@@ -7,7 +7,7 @@ const morgan = require('morgan');
 const fs = require('fs').promises;
 
 // Importar módulos propios
-const ConfigManager = require('./modules/config-manager');
+const ConfigManager = require('./modules/configManager');
 
 // Inicializar Express
 const app = express();
@@ -56,6 +56,7 @@ async function setupMiddlewares() {
 
   // Archivos estáticos
   app.use(express.static(path.join(__dirname, 'public')));
+  app.use('/vendor', express.static(path.join(__dirname, 'public/vendor')));
 
   // View engine
   app.set('view engine', 'ejs');

@@ -1,43 +1,58 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= title %></title>
-    
-    <!-- TailwindCSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- SortableJS CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+    <title>
+        <%= title %>
+    </title>
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
-    
+    <!-- TailwindCSS desde archivo local -->
+    <script src="/vendor/tailwindcss/tailwind.min.js"></script>
+
+    <!-- SortableJS desde archivo local -->
+    <script src="/vendor/sortablejs/Sortable.min.js"></script>
+
+    <!-- Lucide Icons desde archivo local -->
+    <script src="/vendor/lucide/lucide.min.js"></script>
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="/css/admin.css">
-    
+
     <style>
-        /* Animaciones personalizadas */
         .fade-in {
             animation: fadeIn 0.3s ease-in;
         }
-        
+
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
+
         .slide-down {
             animation: slideDown 0.3s ease-out;
         }
-        
+
         @keyframes slideDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        
-        /* Loading spinner */
+
         .spinner {
             border: 2px solid #f3f3f3;
             border-top: 2px solid #3498db;
@@ -46,34 +61,32 @@
             height: 16px;
             animation: spin 1s linear infinite;
         }
-        
+
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
-        
-        /* Drag handle cursor */
+
         .drag-handle {
             cursor: grab;
         }
-        
+
         .drag-handle:active {
             cursor: grabbing;
         }
-        
-        /* Sortable ghost styles */
+
         .sortable-ghost {
             opacity: 0.5;
             background: #e5e7eb;
         }
-
-        /* Status indicators */
-        .status-success { @apply bg-green-100 text-green-800 border-green-200; }
-        .status-error { @apply bg-red-100 text-red-800 border-red-200; }
-        .status-pending { @apply bg-yellow-100 text-yellow-800 border-yellow-200; }
-        .status-disabled { @apply bg-gray-100 text-gray-600 border-gray-200; }
     </style>
 </head>
+
 <body class="bg-gray-50 min-h-screen">
     <!-- Header -->
     <header class="bg-white shadow-sm border-b">
@@ -88,18 +101,22 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="flex items-center space-x-2">
                     <!-- Status Indicator -->
                     <div class="flex items-center space-x-2 px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
                         <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                         <span>Online</span>
                     </div>
-                    
+
                     <!-- Stats -->
                     <div class="hidden sm:flex items-center space-x-4 text-sm text-gray-600">
-                        <span><%= config.apis.length %> APIs</span>
-                        <span><%= config.apis.filter(api => api.enabled).length %> Activas</span>
+                        <span>
+                            <%= config.apis.length %> APIs
+                        </span>
+                        <span>
+                            <%= config.apis.filter(api=> api.enabled).length %> Activas
+                        </span>
                     </div>
                 </div>
             </div>
@@ -115,37 +132,38 @@
                     <h2 class="text-2xl font-bold text-gray-900">APIs Configuradas</h2>
                     <p class="text-gray-600">Gestiona las fuentes de datos XML</p>
                 </div>
-                
+
                 <div class="flex flex-wrap items-center gap-3">
-                    <button onclick="testAllApis()" 
-                            class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button onclick="testAllApis()"
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <i data-lucide="wifi" class="w-4 h-4 mr-2"></i>
                         Probar Todas
                     </button>
-                    
-                    <button onclick="previewAggregated()" 
-                            class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                    <button onclick="previewAggregated()"
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <i data-lucide="eye" class="w-4 h-4 mr-2"></i>
                         Vista Previa
                     </button>
-                    
+
                     <div class="relative">
-                        <input type="file" id="import-config" accept=".json" onchange="importConfig(this)" class="hidden">
-                        <button onclick="document.getElementById('import-config').click()" 
-                                class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <input type="file" id="import-config" accept=".json" onchange="importConfig(this)"
+                            class="hidden">
+                        <button onclick="document.getElementById('import-config').click()"
+                            class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             <i data-lucide="upload" class="w-4 h-4 mr-2"></i>
                             Importar
                         </button>
                     </div>
-                    
-                    <button onclick="exportConfig()" 
-                            class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+
+                    <button onclick="exportConfig()"
+                        class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                         <i data-lucide="download" class="w-4 h-4 mr-2"></i>
                         Exportar
                     </button>
-                    
-                    <button onclick="showAddApiModal()" 
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+
+                    <button onclick="showAddApiModal()"
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
                         <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                         Agregar API
                     </button>
@@ -155,139 +173,159 @@
 
         <!-- APIs List -->
         <div class="bg-white rounded-lg shadow">
-            <% if (apis.length === 0) { %>
+            <% if (apis.length===0) { %>
                 <!-- Empty State -->
                 <div class="text-center py-12">
                     <i data-lucide="database" class="w-12 h-12 text-gray-400 mx-auto mb-4"></i>
                     <h3 class="text-lg font-medium text-gray-900 mb-2">No hay APIs configuradas</h3>
                     <p class="text-gray-500 mb-6">Comienza agregando tu primera fuente de datos XML</p>
-                    <button onclick="showAddApiModal()" 
-                            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                    <button onclick="showAddApiModal()"
+                        class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
                         <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
                         Agregar Primera API
                     </button>
                 </div>
-            <% } else { %>
-                <!-- APIs Table -->
-                <div class="overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="w-8 px-6 py-3"></th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">API</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">URL</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Intervalo</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Consulta</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="apis-container" class="bg-white divide-y divide-gray-200">
-                            <% apis.forEach(function(api) { %>
-                                <tr data-api-id="<%= api.id %>" class="hover:bg-gray-50">
-                                    <!-- Drag Handle -->
-                                    <td class="px-6 py-4">
-                                        <div class="drag-handle cursor-move text-gray-400 hover:text-gray-600">
-                                            <i data-lucide="grip-vertical" class="w-4 h-4"></i>
-                                        </div>
-                                    </td>
-                                    
-                                    <!-- API Info -->
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center">
-                                            <div class="flex-shrink-0">
-                                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                                    <i data-lucide="database" class="w-4 h-4 text-blue-600"></i>
+                <% } else { %>
+                    <!-- APIs Table -->
+                    <div class="overflow-hidden">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="w-8 px-6 py-3"></th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        API</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        URL</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Estado</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Intervalo</th>
+                                    <th
+                                        class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Última Consulta</th>
+                                    <th
+                                        class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="apis-container" class="bg-white divide-y divide-gray-200">
+                                <% apis.forEach(function(api) { %>
+                                    <tr data-api-id="<%= api.id %>" class="hover:bg-gray-50">
+                                        <!-- Drag Handle -->
+                                        <td class="px-6 py-4">
+                                            <div class="drag-handle cursor-move text-gray-400 hover:text-gray-600">
+                                                <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+                                            </div>
+                                        </td>
+
+                                        <!-- API Info -->
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center">
+                                                <div class="flex-shrink-0">
+                                                    <div
+                                                        class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                                        <i data-lucide="database" class="w-4 h-4 text-blue-600"></i>
+                                                    </div>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <div class="text-sm font-medium text-gray-900">
+                                                        <%= api.name %>
+                                                    </div>
+                                                    <div class="text-sm text-gray-500">ID: <%= api.id %>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div class="ml-3">
-                                                <div class="text-sm font-medium text-gray-900"><%= api.name %></div>
-                                                <div class="text-sm text-gray-500">ID: <%= api.id %></div>
+                                        </td>
+
+                                        <!-- URL -->
+                                        <td class="px-6 py-4">
+                                            <div class="text-sm text-gray-900 max-w-xs truncate" title="<%= api.url %>">
+                                                <%= api.url || 'No configurada' %>
                                             </div>
-                                        </div>
-                                    </td>
-                                    
-                                    <!-- URL -->
-                                    <td class="px-6 py-4">
-                                        <div class="text-sm text-gray-900 max-w-xs truncate" title="<%= api.url %>">
-                                            <%= api.url || 'No configurada' %>
-                                        </div>
-                                    </td>
-                                    
-                                    <!-- Status -->
-                                    <td class="px-6 py-4">
-                                        <div class="flex items-center space-x-2">
-                                            <!-- Enabled/Disabled Toggle -->
-                                            <label class="relative inline-flex items-center cursor-pointer">
-                                                <input type="checkbox" 
-                                                       class="sr-only peer" 
-                                                       <%= api.enabled ? 'checked' : '' %>
-                                                       onchange="toggleApi('<%= api.id %>', this.checked)">
-                                                <div class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600"></div>
-                                            </label>
-                                            
-                                            <!-- Status Badge -->
-                                            <% if (api.lastStatus === 'success') { %>
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                                    <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
-                                                    Exitoso
-                                                </span>
-                                            <% } else if (api.lastStatus === 'error') { %>
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                                    <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i>
-                                                    Error
-                                                </span>
-                                            <% } else { %>
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                                    <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
-                                                    Pendiente
-                                                </span>
-                                            <% } %>
-                                        </div>
-                                    </td>
-                                    
-                                    <!-- Interval -->
-                                    <td class="px-6 py-4 text-sm text-gray-900">
-                                        <%= api.interval %>s
-                                    </td>
-                                    
-                                    <!-- Last Fetch -->
-                                    <td class="px-6 py-4 text-sm text-gray-500">
-                                        <% if (api.lastFetch) { %>
-                                            <%= new Date(api.lastFetch).toLocaleString('es-ES') %>
-                                        <% } else { %>
-                                            Nunca
-                                        <% } %>
-                                    </td>
-                                    
-                                    <!-- Actions -->
-                                    <td class="px-6 py-4 text-right text-sm font-medium">
-                                        <div class="flex items-center justify-end space-x-2">
-                                            <button onclick="testApi('<%= api.id %>')" 
+                                        </td>
+
+                                        <!-- Status -->
+                                        <td class="px-6 py-4">
+                                            <div class="flex items-center space-x-2">
+                                                <!-- Enabled/Disabled Toggle -->
+                                                <label class="relative inline-flex items-center cursor-pointer">
+                                                    <input type="checkbox" class="sr-only peer" <%=api.enabled
+                                                        ? 'checked' : '' %>
+                                                    onchange="toggleApi('<%= api.id %>', this.checked)">
+                                                        <div
+                                                            class="w-9 h-5 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600">
+                                                        </div>
+                                                </label>
+
+                                                <!-- Status Badge -->
+                                                <% if (api.lastStatus==='success' ) { %>
+                                                    <span
+                                                        class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                        <i data-lucide="check-circle" class="w-3 h-3 mr-1"></i>
+                                                        Exitoso
+                                                    </span>
+                                                    <% } else if (api.lastStatus==='error' ) { %>
+                                                        <span
+                                                            class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                                            <i data-lucide="x-circle" class="w-3 h-3 mr-1"></i>
+                                                            Error
+                                                        </span>
+                                                        <% } else { %>
+                                                            <span
+                                                                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                                <i data-lucide="clock" class="w-3 h-3 mr-1"></i>
+                                                                Pendiente
+                                                            </span>
+                                                            <% } %>
+                                            </div>
+                                        </td>
+
+                                        <!-- Interval -->
+                                        <td class="px-6 py-4 text-sm text-gray-900">
+                                            <%= api.interval %>s
+                                        </td>
+
+                                        <!-- Last Fetch -->
+                                        <td class="px-6 py-4 text-sm text-gray-500">
+                                            <% if (api.lastFetch) { %>
+                                                <%= new Date(api.lastFetch).toLocaleString('es-ES') %>
+                                                    <% } else { %>
+                                                        Nunca
+                                                        <% } %>
+                                        </td>
+
+                                        <!-- Actions -->
+                                        <td class="px-6 py-4 text-right text-sm font-medium">
+                                            <div class="flex items-center justify-end space-x-2">
+                                                <button onclick="testApi('<%= api.id %>')"
                                                     class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50"
                                                     title="Probar conectividad">
-                                                <i data-lucide="wifi" class="w-4 h-4"></i>
-                                            </button>
-                                            
-                                            <button onclick="editApi('<%= api.id %>')" 
+                                                    <i data-lucide="wifi" class="w-4 h-4"></i>
+                                                </button>
+
+                                                <button onclick="editApi('<%= api.id %>')"
                                                     class="text-gray-600 hover:text-gray-900 p-1 rounded hover:bg-gray-50"
                                                     title="Editar">
-                                                <i data-lucide="edit" class="w-4 h-4"></i>
-                                            </button>
-                                            
-                                            <button onclick="deleteApi('<%= api.id %>', '<%= api.name %>')" 
+                                                    <i data-lucide="edit" class="w-4 h-4"></i>
+                                                </button>
+
+                                                <button onclick="deleteApi('<%= api.id %>', '<%= api.name %>')"
                                                     class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50"
                                                     title="Eliminar">
-                                                <i data-lucide="trash-2" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <% }); %>
-                        </tbody>
-                    </table>
-                </div>
-            <% } %>
+                                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }); %>
+                            </tbody>
+                        </table>
+                    </div>
+                    <% } %>
         </div>
 
         <!-- Settings Summary -->
@@ -295,19 +333,27 @@
             <h3 class="text-lg font-medium text-gray-900 mb-4">Configuración Global</h3>
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <div class="text-2xl font-bold text-blue-600"><%= config.settings.cacheTime %></div>
+                    <div class="text-2xl font-bold text-blue-600">
+                        <%= config.settings.cacheTime %>
+                    </div>
                     <div class="text-sm text-gray-500">Cache (segundos)</div>
                 </div>
                 <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <div class="text-2xl font-bold text-green-600"><%= config.settings.timeout %></div>
+                    <div class="text-2xl font-bold text-green-600">
+                        <%= config.settings.timeout %>
+                    </div>
                     <div class="text-sm text-gray-500">Timeout (ms)</div>
                 </div>
                 <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <div class="text-2xl font-bold text-orange-600"><%= config.settings.retries %></div>
+                    <div class="text-2xl font-bold text-orange-600">
+                        <%= config.settings.retries %>
+                    </div>
                     <div class="text-sm text-gray-500">Reintentos</div>
                 </div>
                 <div class="text-center p-4 bg-gray-50 rounded-lg">
-                    <div class="text-2xl font-bold text-purple-600"><%= config.settings.port %></div>
+                    <div class="text-2xl font-bold text-purple-600">
+                        <%= config.settings.port %>
+                    </div>
                     <div class="text-sm text-gray-500">Puerto</div>
                 </div>
             </div>
@@ -324,84 +370,65 @@
                         <i data-lucide="x" class="w-5 h-5"></i>
                     </button>
                 </div>
-                
+
                 <form id="api-form" onsubmit="saveApi(event)">
                     <div class="space-y-4">
                         <!-- Nombre -->
                         <div>
                             <label for="api-name" class="block text-sm font-medium text-gray-700">Nombre</label>
-                            <input type="text" 
-                                   id="api-name" 
-                                   name="name" 
-                                   required 
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <input type="text" id="api-name" name="name" required
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         </div>
-                        
+
                         <!-- URL -->
                         <div>
                             <label for="api-url" class="block text-sm font-medium text-gray-700">URL</label>
                             <div class="mt-1 relative">
-                                <input type="url" 
-                                       id="api-url" 
-                                       name="url" 
-                                       required 
-                                       placeholder="https://ejemplo.com/api/data.xml"
-                                       class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
-                                <button type="button" 
-                                        onclick="testCurrentUrl()" 
-                                        class="absolute inset-y-0 right-0 px-3 flex items-center text-sm text-blue-600 hover:text-blue-800">
+                                <input type="url" id="api-url" name="url" required
+                                    placeholder="https://ejemplo.com/api/data.xml"
+                                    class="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <button type="button" onclick="testCurrentUrl()"
+                                    class="absolute inset-y-0 right-0 px-3 flex items-center text-sm text-blue-600 hover:text-blue-800">
                                     <i data-lucide="wifi" class="w-4 h-4"></i>
                                 </button>
                             </div>
                             <div id="url-test-result" class="mt-2"></div>
                         </div>
-                        
+
                         <!-- Intervalo -->
                         <div>
-                            <label for="api-interval" class="block text-sm font-medium text-gray-700">Intervalo (segundos)</label>
-                            <input type="number" 
-                                   id="api-interval" 
-                                   name="interval" 
-                                   min="30" 
-                                   value="300" 
-                                   required
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <label for="api-interval" class="block text-sm font-medium text-gray-700">Intervalo
+                                (segundos)</label>
+                            <input type="number" id="api-interval" name="interval" min="30" value="300" required
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                             <p class="mt-1 text-sm text-gray-500">Mínimo 30 segundos</p>
                         </div>
-                        
+
                         <!-- Timeout -->
                         <div>
-                            <label for="api-timeout" class="block text-sm font-medium text-gray-700">Timeout (ms)</label>
-                            <input type="number" 
-                                   id="api-timeout" 
-                                   name="timeout" 
-                                   min="1000" 
-                                   value="5000" 
-                                   required
-                                   class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                            <label for="api-timeout" class="block text-sm font-medium text-gray-700">Timeout
+                                (ms)</label>
+                            <input type="number" id="api-timeout" name="timeout" min="1000" value="5000" required
+                                class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
                         </div>
-                        
+
                         <!-- Habilitada -->
                         <div class="flex items-center">
-                            <input type="checkbox" 
-                                   id="api-enabled" 
-                                   name="enabled" 
-                                   checked
-                                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <input type="checkbox" id="api-enabled" name="enabled" checked
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
                             <label for="api-enabled" class="ml-2 block text-sm text-gray-900">
                                 API habilitada
                             </label>
                         </div>
                     </div>
-                    
+
                     <div class="mt-6 flex justify-end space-x-3">
-                        <button type="button" 
-                                onclick="closeApiModal()" 
-                                class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button type="button" onclick="closeApiModal()"
+                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500">
                             Cancelar
                         </button>
-                        <button type="submit" 
-                                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
+                        <button type="submit"
+                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium">
                             Guardar
                         </button>
                     </div>
@@ -415,15 +442,22 @@
 
     <!-- Scripts -->
     <script src="/js/admin.js"></script>
+
     <script>
-        // Inicializar la aplicación cuando el DOM esté listo
-        document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar iconos de Lucide
-            lucide.createIcons();
-            
-            // Inicializar aplicación
-            initializeApp();
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof lucide !== 'undefined' && lucide.createIcons) {
+                lucide.createIcons();
+            } else {
+                console.warn('Lucide no se cargó correctamente');
+            }
+
+            if (typeof initializeApp === 'function') {
+                initializeApp();
+            } else {
+                console.warn('initializeApp no está definido');
+            }
         });
     </script>
 </body>
+
 </html>
