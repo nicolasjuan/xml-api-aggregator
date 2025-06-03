@@ -58,6 +58,7 @@ xml-api-aggregator/
 Lista de archivos ya implementados:
 * config/apis.json
 * public/js/admin.js
+* public/css/admin.css
 * views/admin.ejs
 * modules/configManager.js
 * modules/dataFetcher.js

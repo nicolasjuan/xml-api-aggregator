@@ -1,0 +1,370 @@
+/* Estilos personalizados para el panel de administración */
+
+/* Animaciones y transiciones */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.slide-down {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Efectos hover mejorados */
+.hover-lift {
+    transition: all 0.2s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Botones con gradientes */
+.btn-gradient-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transition: all 0.3s ease;
+}
+
+.btn-gradient-primary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.btn-gradient-success {
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.btn-gradient-success:hover {
+    background: linear-gradient(135deg, #38ef7d 0%, #11998e 100%);
+    transform: translateY(-1px);
+}
+
+.btn-gradient-danger {
+    background: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+}
+
+.btn-gradient-danger:hover {
+    background: linear-gradient(135deg, #ff4b2b 0%, #ff416c 100%);
+    transform: translateY(-1px);
+}
+
+/* Estilos para drag & drop */
+.sortable-ghost {
+    opacity: 0.4;
+    background: #f3f4f6;
+    border: 2px dashed #d1d5db;
+}
+
+.sortable-chosen {
+    transform: rotate(5deg);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.sortable-drag {
+    transform: rotate(0deg);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+    z-index: 1000;
+}
+
+/* Indicadores de estado mejorados */
+.status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.status-testing {
+    background: linear-gradient(135deg, #fef3c7, #fbbf24);
+    color: #92400e;
+    animation: pulse 2s infinite;
+}
+
+.status-success {
+    background: linear-gradient(135deg, #d1fae5, #10b981);
+    color: #065f46;
+}
+
+.status-error {
+    background: linear-gradient(135deg, #fee2e2, #ef4444);
+    color: #991b1b;
+}
+
+.status-pending {
+    background: linear-gradient(135deg, #e0e7ff, #6366f1);
+    color: #3730a3;
+}
+
+/* Animación de carga */
+.loading-spinner {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Cards mejoradas */
+.api-card {
+    transition: all 0.3s ease;
+    border: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #ffffff 0%, #f9fafb 100%);
+}
+
+.api-card:hover {
+    border-color: #d1d5db;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.api-card.dragging {
+    transform: rotate(3deg);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+}
+
+/* Handle de drag */
+.drag-handle {
+    cursor: grab;
+    color: #9ca3af;
+    transition: color 0.2s ease;
+}
+
+.drag-handle:hover {
+    color: #6b7280;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+}
+
+/* Formularios mejorados */
+.form-input {
+    transition: all 0.2s ease;
+    border: 1px solid #d1d5db;
+    background: white;
+}
+
+.form-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    transform: translateY(-1px);
+}
+
+.form-input:invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+/* Modales y overlays */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    transition: all 0.3s ease;
+}
+
+.modal-content {
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Notificaciones toast */
+.toast {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    min-width: 300px;
+    animation: toastSlideIn 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.toast-success {
+    background: linear-gradient(135deg, #d1fae5, #10b981);
+    border-left: 4px solid #059669;
+    color: #065f46;
+}
+
+.toast-error {
+    background: linear-gradient(135deg, #fee2e2, #ef4444);
+    border-left: 4px solid #dc2626;
+    color: #991b1b;
+}
+
+.toast-warning {
+    background: linear-gradient(135deg, #fef3c7, #f59e0b);
+    border-left: 4px solid #d97706;
+    color: #92400e;
+}
+
+.toast-info {
+    background: linear-gradient(135deg, #dbeafe, #3b82f6);
+    border-left: 4px solid #2563eb;
+    color: #1e40af;
+}
+
+/* Header con gradiente */
+.header-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+.header-gradient::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    opacity: 0.1;
+}
+
+/* Efectos para iconos */
+.icon-bounce:hover {
+    animation: iconBounce 0.6s ease;
+}
+
+@keyframes iconBounce {
+    0%, 20%, 60%, 100% { transform: translateY(0); }
+    40% { transform: translateY(-6px); }
+    80% { transform: translateY(-3px); }
+}
+
+/* Barras de progreso */
+.progress-bar {
+    height: 4px;
+    background: #e5e7eb;
+    border-radius: 2px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 2px;
+    transition: width 0.3s ease;
+    position: relative;
+}
+
+.progress-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.4),
+        transparent
+    );
+    animation: progressShine 2s infinite;
+}
+
+@keyframes progressShine {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* Responsive mejoras */
+@media (max-width: 768px) {
+    .api-card {
+        margin-bottom: 1rem;
+    }
+    
+    .toast {
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+    }
+    
+    .modal-content {
+        margin: 20px;
+        width: calc(100% - 40px);
+    }
+}
+
+/* Estados de carga para elementos específicos */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2, #667eea);
+}
+
+/* Efectos de focus mejorados */
+.focus-ring:focus {
+    outline: none;
+    ring: 2px;
+    ring-color: #6366f1;
+    ring-opacity: 0.5;
+    ring-offset: 2px;
+}
