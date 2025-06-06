@@ -1,5 +1,19 @@
 {
-  "apis": [],
+  "apis": [
+    {
+      "id": "api_1748956412102",
+      "name": "copalpf",
+      "url": "https://rosario3.datafactory.la/xml/es/copalpf/deportes.futbol.copalpf.fixture.xml",
+      "interval": 300,
+      "enabled": true,
+      "order": 0,
+      "headers": {},
+      "timeout": 5000,
+      "retries": 3,
+      "lastFetch": "2025-06-05T11:10:06.261Z",
+      "lastStatus": "success"
+    }
+  ],
   "settings": {
     "cacheTime": 300,
     "timeout": 5000,
@@ -9,5 +23,5 @@
     "port": 8080,
     "logLevel": "info"
   },
-  "lastModified": "2025-05-30T13:18:03.127Z"
+  "lastModified": "2025-06-05T11:10:06.261Z"
 }

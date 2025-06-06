@@ -67,12 +67,12 @@
 }
 
 .sortable-chosen {
-    transform: rotate(5deg);
+    /* transform: rotate(5deg); */
     box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
 }
 
 .sortable-drag {
-    transform: rotate(0deg);
+    /* transform: rotate(0deg); */
     box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
     z-index: 1000;
 }
@@ -363,8 +363,8 @@
 /* Efectos de focus mejorados */
 .focus-ring:focus {
     outline: none;
-    ring: 2px;
+    /* ring: 2px;
     ring-color: #6366f1;
     ring-opacity: 0.5;
-    ring-offset: 2px;
+    ring-offset: 2px; */
 }

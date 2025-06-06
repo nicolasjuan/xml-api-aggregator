@@ -49,10 +49,10 @@ class AdminPanel {
      */
     setupEventListeners() {
         // Modal overlay para cerrar modales
-        const overlay = document.getElementById('modal-overlay');
-        if (overlay) {
-            overlay.addEventListener('click', () => this.closeApiModal());
-        }
+        //const overlay = document.getElementById('modal-overlay');
+        //if (overlay) {
+        //    overlay.addEventListener('click', () => this.closeApiModal());
+        //}
 
         // Escape key para cerrar modales
         document.addEventListener('keydown', (e) => {
@@ -76,7 +76,7 @@ class AdminPanel {
     startAutoRefresh() {
         this.refreshInterval = setInterval(() => {
             this.refreshApis();
-        }, 30000); // 30 segundos
+        }, 60000); // 30 segundos
     }
 
     /**

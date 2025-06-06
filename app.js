@@ -8,6 +8,8 @@ const fs = require('fs').promises;
 
 // Importar módulos propios
 const ConfigManager = require('./modules/configManager');
+const DataFetcher = require('./modules/dataFetcher');
+const XmlProcessor = require('./modules/xmlProcessor');
 
 // Inicializar Express
 const app = express();
@@ -22,7 +24,7 @@ let serverConfig = {};
 async function setupMiddlewares() {
   // Cargar configuración
   serverConfig = await configManager.loadConfig();
-  
+
   // Helmet para seguridad (configurado para desarrollo)
   app.use(helmet({
     contentSecurityPolicy: {
@@ -30,6 +32,7 @@ async function setupMiddlewares() {
         defaultSrc: ["'self'"],
         styleSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
         scriptSrc: ["'self'", "'unsafe-inline'", "https://cdn.jsdelivr.net"],
+        scriptSrcAttr: ["'unsafe-inline'"],
         imgSrc: ["'self'", "data:", "https:"],
       },
     },
@@ -72,7 +75,7 @@ function setupRoutes() {
     try {
       const config = await configManager.loadConfig();
       const enabledApis = await configManager.getEnabledApis();
-      
+
       res.json({
         status: 'active',
         version: '1.0.0',
@@ -93,8 +96,8 @@ function setupRoutes() {
       });
     } catch (error) {
       console.error('❌ Error en ruta principal:', error.message);
-      res.status(500).json({ 
-        status: 'error', 
+      res.status(500).json({
+        status: 'error',
         message: 'Error interno del servidor',
         timestamp: new Date().toISOString()
       });
@@ -106,7 +109,7 @@ function setupRoutes() {
     try {
       const config = await configManager.loadConfig();
       const enabledApis = await configManager.getEnabledApis();
-      
+
       res.json({
         status: 'healthy',
         timestamp: new Date().toISOString(),
@@ -138,8 +141,8 @@ function setupRoutes() {
       });
     } catch (error) {
       console.error('❌ Error cargando panel admin:', error.message);
-      res.status(500).render('error', { 
-        message: 'Error cargando el panel de administración' 
+      res.status(500).render('error', {
+        message: 'Error cargando el panel de administración'
       });
     }
   });
@@ -221,7 +224,7 @@ function setupRoutes() {
   // Test de conectividad
   app.post('/api/test-url', async (req, res) => {
     const { url, timeout = 5000 } = req.body;
-    
+
     if (!url) {
       return res.status(400).json({ error: 'URL requerida' });
     }
@@ -229,7 +232,7 @@ function setupRoutes() {
     try {
       const axios = require('axios');
       const startTime = Date.now();
-      
+
       const response = await axios.get(url, {
         timeout: timeout,
         headers: {
@@ -241,7 +244,7 @@ function setupRoutes() {
       });
 
       const responseTime = Date.now() - startTime;
-      
+
       res.json({
         success: true,
         status: response.status,
@@ -250,7 +253,7 @@ function setupRoutes() {
         contentType: response.headers['content-type'] || 'unknown',
         contentLength: response.headers['content-length'] || 'unknown',
         isXml: (response.headers['content-type'] || '').includes('xml'),
-        preview: typeof response.data === 'string' 
+        preview: typeof response.data === 'string'
           ? response.data.substring(0, 500) + (response.data.length > 500 ? '...' : '')
           : JSON.stringify(response.data).substring(0, 500)
       });
@@ -265,26 +268,180 @@ function setupRoutes() {
     }
   });
 
-  // Ruta para datos agregados (placeholder por ahora)
+  // Ruta para datos agregados - IMPLEMENTACIÓN COMPLETA
   app.get('/api/aggregated', async (req, res) => {
     try {
+      console.log('🔄 Iniciando agregación de datos XML...');
+
+      // Importar módulos necesarios
+      const DataFetcher = require('./modules/dataFetcher');
+      const XmlProcessor = require('./modules/xmlProcessor');
+
+      // Crear instancias
+      const dataFetcher = new DataFetcher();
+      const xmlProcessor = new XmlProcessor();
+
+      // Obtener APIs habilitadas
       const enabledApis = await configManager.getEnabledApis();
-      
-      res.json({
-        status: 'success',
-        timestamp: new Date().toISOString(),
-        totalSources: enabledApis.length,
-        message: '⚠️ Funcionalidad de agregación aún no implementada',
-        availableSources: enabledApis.map(api => ({
-          id: api.id,
-          name: api.name,
-          url: api.url,
-          lastFetch: api.lastFetch,
-          lastStatus: api.lastStatus
-        }))
+
+      if (enabledApis.length === 0) {
+        return res.json({
+          status: 'warning',
+          message: 'No hay APIs habilitadas configuradas',
+          timestamp: new Date().toISOString(),
+          totalSources: 0,
+          data: null
+        });
+      }
+
+      // Paso 1: Obtener datos de todas las APIs
+      console.log(`📡 Obteniendo datos de ${enabledApis.length} APIs...`);
+      const fetchResults = await dataFetcher.fetchAllApis({
+        sequential: req.query.sequential === 'true' // Permitir modo secuencial via query param
       });
+
+      // Verificar si hay datos exitosos
+      const successfulFetches = fetchResults.results.filter(r => r.success);
+      if (successfulFetches.length === 0) {
+        return res.status(503).json({
+          status: 'error',
+          message: 'No se pudieron obtener datos de ninguna API',
+          timestamp: new Date().toISOString(),
+          totalSources: enabledApis.length,
+          errors: fetchResults.results.map(r => ({
+            apiId: r.apiId,
+            apiName: r.apiName,
+            error: r.error
+          })),
+          fetchStats: fetchResults.stats
+        });
+      }
+
+      // Paso 2: Procesar datos XML
+      console.log(`🔄 Procesando ${successfulFetches.length} fuentes XML...`);
+      const processResults = await xmlProcessor.processMultipleXmlData(successfulFetches);
+
+      const successfulProcessing = processResults.results.filter(r => r.success);
+      if (successfulProcessing.length === 0) {
+        return res.status(422).json({
+          status: 'error',
+          message: 'No se pudieron procesar datos XML válidos',
+          timestamp: new Date().toISOString(),
+          totalSources: enabledApis.length,
+          fetchedSources: successfulFetches.length,
+          processingErrors: processResults.results.map(r => ({
+            apiId: r.apiId,
+            apiName: r.apiName,
+            error: r.error
+          })),
+          stats: {
+            fetch: fetchResults.stats,
+            processing: processResults.stats
+          }
+        });
+      }
+
+      // Paso 3: Agregar XMLs
+      console.log(`🔗 Agregando ${successfulProcessing.length} fuentes XML...`);
+      const aggregationOptions = {
+        mergeStrategy: req.query.merge || 'default',
+        includeMetadata: req.query.metadata !== 'false',
+        format: req.query.format || 'xml'
+      };
+
+      const aggregationResult = await xmlProcessor.aggregateXmlSources(
+        successfulProcessing,
+        aggregationOptions
+      );
+
+      if (!aggregationResult.success) {
+        return res.status(500).json({
+          status: 'error',
+          message: 'Error en la agregación de datos XML',
+          error: aggregationResult.error,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      // Preparar respuesta según formato solicitado
+      const responseFormat = req.query.format || req.headers.accept;
+
+      if (responseFormat === 'xml' || req.headers.accept?.includes('xml')) {
+        // Responder con XML
+        res.set('Content-Type', 'application/xml; charset=utf-8');
+        res.send(aggregationResult.xml);
+      } else {
+        // Responder con JSON (por defecto)
+        const response = {
+          status: 'success',
+          timestamp: new Date().toISOString(),
+          summary: {
+            totalConfiguredApis: enabledApis.length,
+            successfulFetches: successfulFetches.length,
+            successfulProcessing: successfulProcessing.length,
+            processingTime: aggregationResult.metadata.processingTime
+          },
+          metadata: {
+            aggregationOptions,
+            sources: successfulProcessing.map(r => ({
+              id: r.apiId,
+              name: r.apiName,
+              url: r.originalMetadata?.url,
+              lastFetch: r.originalMetadata?.timestamp,
+              processingTime: r.processingTime,
+              xmlMetadata: {
+                rootElement: r.xmlMetadata?.rootElement,
+                elementCount: r.xmlMetadata?.elementCount,
+                size: r.xmlMetadata?.size
+              }
+            }))
+          },
+          stats: {
+            fetch: fetchResults.stats,
+            processing: processResults.stats,
+            aggregation: {
+              totalSources: successfulProcessing.length,
+              processingTime: aggregationResult.metadata.processingTime
+            }
+          }
+        };
+
+        // Incluir datos agregados según query params
+        if (req.query.include === 'xml') {
+          response.aggregatedXml = aggregationResult.xml;
+        }
+
+        if (req.query.include === 'structure' || req.query.include === 'all') {
+          response.aggregatedStructure = aggregationResult.structure;
+        }
+
+        if (req.query.include === 'raw' || req.query.include === 'all') {
+          response.rawSources = successfulProcessing.map(r => ({
+            apiId: r.apiId,
+            apiName: r.apiName,
+            rawData: r.rawData,
+            parsedData: r.parsedData
+          }));
+        }
+
+        // Si no se especifica qué incluir, por defecto incluir XML
+        if (!req.query.include) {
+          response.aggregatedXml = aggregationResult.xml;
+        }
+
+        res.json(response);
+      }
+
+      console.log(`✅ Agregación completada exitosamente: ${successfulProcessing.length} fuentes procesadas`);
+
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      console.error('❌ Error en agregación de datos:', error);
+      res.status(500).json({
+        status: 'error',
+        message: 'Error interno durante la agregación',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor',
+        timestamp: new Date().toISOString()
+      });
     }
   });
 
@@ -328,7 +485,7 @@ function setupRoutes() {
  */
 async function ensureDirectoriesAndFiles() {
   const directories = ['config', 'logs', 'views', 'public/css', 'public/js'];
-  
+
   for (const dir of directories) {
     try {
       await fs.mkdir(path.join(__dirname, dir), { recursive: true });
@@ -352,19 +509,19 @@ async function ensureDirectoriesAndFiles() {
 async function startServer() {
   try {
     console.log('🚀 Inicializando XML API Aggregator...');
-    
+
     // Crear directorios y archivos necesarios
     await ensureDirectoriesAndFiles();
-    
+
     // Configurar middlewares
     await setupMiddlewares();
-    
+
     // Configurar rutas
     setupRoutes();
-    
+
     // Obtener puerto de configuración
     const port = serverConfig.settings.port || 8080;
-    
+
     // Iniciar servidor
     const server = app.listen(port, () => {
       console.log('✅ Servidor iniciado correctamente');

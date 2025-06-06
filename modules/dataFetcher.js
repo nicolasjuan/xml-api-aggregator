@@ -1,6 +1,6 @@
 // modules/dataFetcher.js
 const axios = require('axios');
-const ConfigManager = require('./config-manager');
+const ConfigManager = require('./configManager');
 
 class DataFetcher {
   constructor() {
