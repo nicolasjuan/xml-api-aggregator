@@ -81,10 +81,10 @@ class XmlProcessor {
 
       // Parsear XML a objeto JavaScript
       const parsedData = this.parser.parse(fetchResult.data);
-      
+
       // Extraer metadatos del XML
       const metadata = this.extractXmlMetadata(fetchResult.data, parsedData);
-      
+
       // Normalizar estructura
       const normalizedData = this.normalizeXmlStructure(parsedData);
 
@@ -134,7 +134,7 @@ class XmlProcessor {
     console.log(`🚀 Processing ${fetchResults.length} XML sources...`);
 
     const processedResults = [];
-    
+
     for (const fetchResult of fetchResults) {
       const processed = await this.processXmlData(fetchResult);
       processedResults.push(processed);
@@ -167,7 +167,7 @@ class XmlProcessor {
       const startTime = Date.now();
 
       const successfulResults = processedResults.filter(r => r.success);
-      
+
       if (successfulResults.length === 0) {
         throw new Error('No successful XML sources to aggregate');
       }
@@ -215,10 +215,10 @@ class XmlProcessor {
 
       // Generar XML final
       const aggregatedXml = this.builder.build(aggregatedStructure);
-      
+
       const processingTime = Date.now() - startTime;
       aggregatedStructure['xml-aggregator'].metadata.processingTime = processingTime;
-      
+
       this.stats.totalAggregations++;
 
       console.log(`✅ XML aggregation completed (${processingTime}ms)`);
@@ -264,12 +264,12 @@ class XmlProcessor {
 
       // Intentar parsear
       this.parser.parse(xmlString);
-      
+
       return { isValid: true };
     } catch (error) {
-      return { 
-        isValid: false, 
-        error: error.message 
+      return {
+        isValid: false,
+        error: error.message
       };
     }
   }
@@ -297,7 +297,7 @@ class XmlProcessor {
       if (xmlDeclaration) {
         const versionMatch = xmlDeclaration[0].match(/version=["']([^"']+)["']/);
         const encodingMatch = xmlDeclaration[0].match(/encoding=["']([^"']+)["']/);
-        
+
         if (versionMatch) metadata.version = versionMatch[1];
         if (encodingMatch) metadata.encoding = encodingMatch[1];
       }
@@ -449,19 +449,180 @@ class XmlProcessor {
    */
   getXmlPreview(xmlString, maxLength = 1000) {
     if (!xmlString) return 'No XML data';
-    
+
     try {
       // Formatear XML básico
       const formatted = xmlString
         .replace(/></g, '>\n<')
         .replace(/^\s+|\s+$/g, '');
-      
-      return formatted.length > maxLength 
+
+      return formatted.length > maxLength
         ? formatted.substring(0, maxLength) + '\n... (truncated)'
         : formatted;
     } catch (error) {
       return xmlString.substring(0, maxLength);
     }
+  }
+
+  /**
+ * Validación rápida de XML sin parsing completo (optimizada)
+ * @param {string} xmlString - String XML a validar
+ * @returns {Object} Resultado de validación optimizada
+ */
+  validateXmlFast(xmlString) {
+    try {
+      if (!xmlString || typeof xmlString !== 'string') {
+        return { isValid: false, error: 'No data or invalid data type' };
+      }
+
+      const trimmed = xmlString.trim();
+
+      // Verificaciones básicas rápidas
+      if (trimmed.length === 0) {
+        return { isValid: false, error: 'Empty XML content' };
+      }
+
+      // Debe empezar con declaración XML o tag
+      if (!trimmed.startsWith('<?xml') && !trimmed.startsWith('<')) {
+        return { isValid: false, error: 'Does not start with XML declaration or tag' };
+      }
+
+      // Verificación rápida de balance de tags
+      const openTags = (trimmed.match(/</g) || []).length;
+      const closeTags = (trimmed.match(/>/g) || []).length;
+
+      if (openTags !== closeTags) {
+        return { isValid: false, error: 'Unbalanced XML tags' };
+      }
+
+      // Verificar que tenga al menos un elemento raíz
+      const rootTagMatch = trimmed.match(/<([^\/!?][^>\s]*)/);
+      if (!rootTagMatch) {
+        return { isValid: false, error: 'No root element found' };
+      }
+
+      const rootTag = rootTagMatch[1];
+      const rootClosePattern = new RegExp(`</${rootTag.split(/\s/)[0]}>`);
+
+      if (!rootClosePattern.test(trimmed) && !trimmed.includes('/>')) {
+        return { isValid: false, error: `Root element '${rootTag}' not properly closed` };
+      }
+
+      // Si pasa las validaciones rápidas, es probablemente válido
+      return {
+        isValid: true,
+        rootElement: rootTag.split(/\s/)[0],
+        hasXmlDeclaration: trimmed.startsWith('<?xml'),
+        estimatedSize: trimmed.length
+      };
+
+    } catch (error) {
+      return {
+        isValid: false,
+        error: `Validation error: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * Obtiene información básica del XML sin parsing completo
+   * @param {string} xmlString - XML string
+   * @returns {Object} Información básica del XML
+   */
+  getXmlBasicInfo(xmlString) {
+    try {
+      const info = {
+        size: xmlString.length,
+        hasXmlDeclaration: false,
+        rootElement: null,
+        encoding: 'utf-8',
+        version: '1.0',
+        estimatedElements: 0,
+        hasNamespaces: false
+      };
+
+      // Detectar declaración XML
+      const xmlDeclaration = xmlString.match(/<\?xml[^>]*\?>/);
+      if (xmlDeclaration) {
+        info.hasXmlDeclaration = true;
+
+        const versionMatch = xmlDeclaration[0].match(/version=["']([^"']+)["']/);
+        const encodingMatch = xmlDeclaration[0].match(/encoding=["']([^"']+)["']/);
+
+        if (versionMatch) info.version = versionMatch[1];
+        if (encodingMatch) info.encoding = encodingMatch[1];
+      }
+
+      // Encontrar elemento raíz
+      const rootMatch = xmlString.match(/<([^\/!?][^>\s]*)/);
+      if (rootMatch) {
+        info.rootElement = rootMatch[1].split(/\s/)[0];
+      }
+
+      // Contar elementos aproximadamente
+      const elementMatches = xmlString.match(/<[^\/!?][^>]*>/g);
+      info.estimatedElements = elementMatches ? elementMatches.length : 0;
+
+      // Detectar namespaces
+      info.hasNamespaces = /xmlns[^=]*=/.test(xmlString);
+
+      return info;
+
+    } catch (error) {
+      console.warn('Warning getting XML basic info:', error.message);
+      return {
+        size: xmlString.length,
+        hasXmlDeclaration: false,
+        rootElement: null,
+        encoding: 'utf-8',
+        version: '1.0',
+        estimatedElements: 0,
+        hasNamespaces: false,
+        error: error.message
+      };
+    }
+  }
+
+  /**
+   * Limpia XML removiendo caracteres problemáticos pero manteniendo estructura
+   * @param {string} xmlString - XML a limpiar
+   * @returns {string} XML limpio
+   */
+  cleanXmlString(xmlString) {
+    try {
+      return xmlString
+        // Remover caracteres de control excepto tab, newline, carriage return
+        .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+        // Normalizar espacios en blanco
+        .replace(/\r\n/g, '\n')
+        .replace(/\r/g, '\n')
+        // Mantener estructura pero limpiar espacios excesivos entre elementos
+        .replace(/>\s+</g, '><')
+        .trim();
+    } catch (error) {
+      console.warn('Error cleaning XML string:', error.message);
+      return xmlString;
+    }
+  }
+
+  /**
+   * Extrae metadatos básicos sin parsing completo (para el agregador)
+   * @param {string} rawXml - XML crudo
+   * @returns {Object} Metadatos básicos
+   */
+  extractBasicMetadata(rawXml) {
+    const basicInfo = this.getXmlBasicInfo(rawXml);
+
+    return {
+      size: basicInfo.size,
+      rootElement: basicInfo.rootElement,
+      encoding: basicInfo.encoding,
+      version: basicInfo.version,
+      hasXmlDeclaration: basicInfo.hasXmlDeclaration,
+      estimatedElements: basicInfo.estimatedElements,
+      hasNamespaces: basicInfo.hasNamespaces,
+      isWellFormed: this.validateXmlFast(rawXml).isValid
+    };
   }
 }
 

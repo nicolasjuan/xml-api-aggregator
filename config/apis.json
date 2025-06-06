@@ -4,13 +4,26 @@
       "id": "api_1748956412102",
       "name": "copalpf",
       "url": "https://rosario3.datafactory.la/xml/es/copalpf/deportes.futbol.copalpf.fixture.xml",
-      "interval": 300,
+      "interval": 1800,
       "enabled": true,
       "order": 0,
       "headers": {},
       "timeout": 5000,
       "retries": 3,
-      "lastFetch": "2025-06-05T11:10:06.261Z",
+      "lastFetch": "2025-06-06T13:02:57.169Z",
+      "lastStatus": "success"
+    },
+    {
+      "id": "api_1749214792846",
+      "name": "eliminatorias",
+      "url": "https://rosario3.datafactory.la/xml/es/eliminatorias/deportes.futbol.eliminatorias.fixture.xml",
+      "interval": 1800,
+      "enabled": true,
+      "order": 1,
+      "headers": {},
+      "timeout": 5000,
+      "retries": 3,
+      "lastFetch": "2025-06-06T13:02:54.447Z",
       "lastStatus": "success"
     }
   ],
@@ -23,5 +36,5 @@
     "port": 8080,
     "logLevel": "info"
   },
-  "lastModified": "2025-06-05T11:10:06.261Z"
+  "lastModified": "2025-06-06T13:02:57.169Z"
 }

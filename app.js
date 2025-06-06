@@ -8,8 +8,10 @@ const fs = require('fs').promises;
 
 // Importar módulos propios
 const ConfigManager = require('./modules/configManager');
-const DataFetcher = require('./modules/dataFetcher');
-const XmlProcessor = require('./modules/xmlProcessor');
+const AggregatorService = require('./modules/aggregatorService');
+
+// Crear instancia del servicio
+const aggregatorService = new AggregatorService();
 
 // Inicializar Express
 const app = express();
@@ -268,178 +270,138 @@ function setupRoutes() {
     }
   });
 
-  // Ruta para datos agregados - IMPLEMENTACIÓN COMPLETA
+  // Ruta optimizada para datos agregados
   app.get('/api/aggregated', async (req, res) => {
     try {
-      console.log('🔄 Iniciando agregación de datos XML...');
+      console.log('🔄 Solicitud de agregación XML recibida');
 
-      // Importar módulos necesarios
-      const DataFetcher = require('./modules/dataFetcher');
-      const XmlProcessor = require('./modules/xmlProcessor');
-
-      // Crear instancias
-      const dataFetcher = new DataFetcher();
-      const xmlProcessor = new XmlProcessor();
-
-      // Obtener APIs habilitadas
-      const enabledApis = await configManager.getEnabledApis();
-
-      if (enabledApis.length === 0) {
-        return res.json({
-          status: 'warning',
-          message: 'No hay APIs habilitadas configuradas',
-          timestamp: new Date().toISOString(),
-          totalSources: 0,
-          data: null
-        });
-      }
-
-      // Paso 1: Obtener datos de todas las APIs
-      console.log(`📡 Obteniendo datos de ${enabledApis.length} APIs...`);
-      const fetchResults = await dataFetcher.fetchAllApis({
-        sequential: req.query.sequential === 'true' // Permitir modo secuencial via query param
-      });
-
-      // Verificar si hay datos exitosos
-      const successfulFetches = fetchResults.results.filter(r => r.success);
-      if (successfulFetches.length === 0) {
-        return res.status(503).json({
-          status: 'error',
-          message: 'No se pudieron obtener datos de ninguna API',
-          timestamp: new Date().toISOString(),
-          totalSources: enabledApis.length,
-          errors: fetchResults.results.map(r => ({
-            apiId: r.apiId,
-            apiName: r.apiName,
-            error: r.error
-          })),
-          fetchStats: fetchResults.stats
-        });
-      }
-
-      // Paso 2: Procesar datos XML
-      console.log(`🔄 Procesando ${successfulFetches.length} fuentes XML...`);
-      const processResults = await xmlProcessor.processMultipleXmlData(successfulFetches);
-
-      const successfulProcessing = processResults.results.filter(r => r.success);
-      if (successfulProcessing.length === 0) {
-        return res.status(422).json({
-          status: 'error',
-          message: 'No se pudieron procesar datos XML válidos',
-          timestamp: new Date().toISOString(),
-          totalSources: enabledApis.length,
-          fetchedSources: successfulFetches.length,
-          processingErrors: processResults.results.map(r => ({
-            apiId: r.apiId,
-            apiName: r.apiName,
-            error: r.error
-          })),
-          stats: {
-            fetch: fetchResults.stats,
-            processing: processResults.stats
-          }
-        });
-      }
-
-      // Paso 3: Agregar XMLs
-      console.log(`🔗 Agregando ${successfulProcessing.length} fuentes XML...`);
-      const aggregationOptions = {
-        mergeStrategy: req.query.merge || 'default',
-        includeMetadata: req.query.metadata !== 'false',
-        format: req.query.format || 'xml'
+      // Preparar opciones de agregación desde query parameters
+      const options = {
+        sequential: req.query.sequential === 'true',
+        timeout: req.query.timeout ? parseInt(req.query.timeout) : undefined,
+        format: req.query.format || 'xml',
+        include: req.query.include || 'xml'
       };
 
-      const aggregationResult = await xmlProcessor.aggregateXmlSources(
-        successfulProcessing,
-        aggregationOptions
-      );
+      // Ejecutar agregación usando el servicio
+      const result = await aggregatorService.aggregateAllSources(options);
 
-      if (!aggregationResult.success) {
-        return res.status(500).json({
-          status: 'error',
-          message: 'Error en la agregación de datos XML',
-          error: aggregationResult.error,
-          timestamp: new Date().toISOString()
-        });
+      // Manejar diferentes tipos de respuesta
+      if (result.status === 'warning') {
+        return res.status(200).json(result);
       }
 
-      // Preparar respuesta según formato solicitado
-      const responseFormat = req.query.format || req.headers.accept;
+      if (result.status === 'error') {
+        return res.status(result.statusCode || 500).json(result);
+      }
+
+      // Respuesta exitosa - determinar formato
+      const responseFormat = options.format || req.headers.accept;
 
       if (responseFormat === 'xml' || req.headers.accept?.includes('xml')) {
-        // Responder con XML
+        // Responder con XML puro
         res.set('Content-Type', 'application/xml; charset=utf-8');
-        res.send(aggregationResult.xml);
-      } else {
-        // Responder con JSON (por defecto)
-        const response = {
-          status: 'success',
-          timestamp: new Date().toISOString(),
-          summary: {
-            totalConfiguredApis: enabledApis.length,
-            successfulFetches: successfulFetches.length,
-            successfulProcessing: successfulProcessing.length,
-            processingTime: aggregationResult.metadata.processingTime
-          },
-          metadata: {
-            aggregationOptions,
-            sources: successfulProcessing.map(r => ({
-              id: r.apiId,
-              name: r.apiName,
-              url: r.originalMetadata?.url,
-              lastFetch: r.originalMetadata?.timestamp,
-              processingTime: r.processingTime,
-              xmlMetadata: {
-                rootElement: r.xmlMetadata?.rootElement,
-                elementCount: r.xmlMetadata?.elementCount,
-                size: r.xmlMetadata?.size
-              }
-            }))
-          },
-          stats: {
-            fetch: fetchResults.stats,
-            processing: processResults.stats,
-            aggregation: {
-              totalSources: successfulProcessing.length,
-              processingTime: aggregationResult.metadata.processingTime
-            }
-          }
-        };
-
-        // Incluir datos agregados según query params
-        if (req.query.include === 'xml') {
-          response.aggregatedXml = aggregationResult.xml;
-        }
-
-        if (req.query.include === 'structure' || req.query.include === 'all') {
-          response.aggregatedStructure = aggregationResult.structure;
-        }
-
-        if (req.query.include === 'raw' || req.query.include === 'all') {
-          response.rawSources = successfulProcessing.map(r => ({
-            apiId: r.apiId,
-            apiName: r.apiName,
-            rawData: r.rawData,
-            parsedData: r.parsedData
-          }));
-        }
-
-        // Si no se especifica qué incluir, por defecto incluir XML
-        if (!req.query.include) {
-          response.aggregatedXml = aggregationResult.xml;
-        }
-
-        res.json(response);
+        res.set('X-Total-Sources', result.summary.validSources.toString());
+        res.set('X-Processing-Time', result.summary.processingTime.toString());
+        return res.send(result.aggregatedXml);
       }
 
-      console.log(`✅ Agregación completada exitosamente: ${successfulProcessing.length} fuentes procesadas`);
+      // Responder con JSON (personalizable según include parameter)
+      const jsonResponse = {
+        status: result.status,
+        timestamp: result.timestamp,
+        summary: result.summary,
+        stats: result.stats
+      };
+
+      // Incluir diferentes partes según el parámetro include
+      switch (options.include) {
+        case 'xml':
+          jsonResponse.aggregatedXml = result.aggregatedXml;
+          break;
+
+        case 'structure':
+          jsonResponse.aggregatedStructure = result.aggregatedStructure;
+          break;
+
+        case 'metadata':
+          jsonResponse.metadata = result.metadata;
+          break;
+
+        case 'all':
+          jsonResponse.aggregatedXml = result.aggregatedXml;
+          jsonResponse.aggregatedStructure = result.aggregatedStructure;
+          jsonResponse.metadata = result.metadata;
+          break;
+
+        default:
+          // Por defecto incluir XML
+          jsonResponse.aggregatedXml = result.aggregatedXml;
+          break;
+      }
+
+      res.json(jsonResponse);
 
     } catch (error) {
-      console.error('❌ Error en agregación de datos:', error);
+      console.error('❌ Error no controlado en ruta de agregación:', error);
       res.status(500).json({
         status: 'error',
-        message: 'Error interno durante la agregación',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno del servidor',
+        message: 'Error interno del servidor',
+        error: process.env.NODE_ENV === 'development' ? error.message : 'Error interno',
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Opcional: Ruta adicional para obtener información de fuentes
+  app.get('/api/sources', async (req, res) => {
+    try {
+      const sourcesInfo = await aggregatorService.getSourcesInfo();
+      res.json({
+        status: 'success',
+        timestamp: new Date().toISOString(),
+        sources: sourcesInfo
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Opcional: Ruta para obtener estadísticas del agregador
+  app.get('/api/aggregator/stats', async (req, res) => {
+    try {
+      const stats = aggregatorService.getStats();
+      res.json({
+        status: 'success',
+        timestamp: new Date().toISOString(),
+        stats
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
+        timestamp: new Date().toISOString()
+      });
+    }
+  });
+
+  // Opcional: Ruta para resetear estadísticas
+  app.post('/api/aggregator/reset-stats', async (req, res) => {
+    try {
+      aggregatorService.resetStats();
+      res.json({
+        status: 'success',
+        message: 'Estadísticas reseteadas',
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: error.message,
         timestamp: new Date().toISOString()
       });
     }
